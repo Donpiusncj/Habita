@@ -90,6 +90,25 @@ ThemeData buildHabitaTheme() {
   );
 }
 
+/// A global key so screens can show a snackbar right after Navigator.pop()
+/// — at that point the popped screen's own context is no longer safely
+/// usable, but the app-level ScaffoldMessenger still is. Set on MaterialApp
+/// via scaffoldMessengerKey.
+final GlobalKey<ScaffoldMessengerState> habitaMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+/// Shows a snackbar via the global messenger key — safe to call right
+/// after popping a screen, unlike ScaffoldMessenger.of(context) with a
+/// context that's about to be disposed.
+void showConfirmation(String message) {
+  habitaMessengerKey.currentState?.showSnackBar(
+    SnackBar(
+      content: Text(message),
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: HabitaColors.accent,
+    ),
+  );
+}
+
 /// Shows a consistent "coming in a later week" snackbar for buttons that
 /// aren't wired to real navigation/data yet. Keeps every placeholder action
 /// in the app behaving the same way.

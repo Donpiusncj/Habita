@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
-import '../data/mock_properties.dart';
+import '../state/app_state.dart';
 import '../theme/habita_theme.dart';
 import '../widgets/property_card.dart';
 import 'property_details_screen.dart';
 
-/// Saved-properties screen. Shown here with mock items already "saved" so
-/// the layout is demonstrable; Week 6 (Dynamic Behaviour & State) and
-/// Week 7 (Persistent Local Data) are where favoriting actually works and
-/// survives an app restart.
+/// Saved-properties screen. Now genuinely dynamic: it shows whatever is
+/// currently favorited in [appState], and rebuilds automatically the
+/// moment something is favorited or unfavorited anywhere else in the app
+/// (Home, Search, or this screen itself). Week 7 (Persistent Local Data)
+/// will make this survive an app restart — right now it only lives in
+/// memory for the current session.
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Stand-in: pretend the first two mock properties were saved.
-    final saved = mockProperties.take(2).toList();
-
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -24,27 +23,31 @@ class FavoritesScreen extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
             child: Text('Saved Properties', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: HabitaColors.textPrimary)),
           ),
-          if (saved.isEmpty)
-            Expanded(child: _EmptyState())
-          else
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: saved.length,
-                itemBuilder: (context, i) {
-                  final property = saved[i];
-                  return PropertyCard(
-                    property: property,
-                    isFavorited: true,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => PropertyDetailsScreen(property: property)),
-                    ),
-                    onFavoriteToggle: () => showComingSoon(context, 'Removing "${property.title}" from Saved'),
-                  );
-                },
-              ),
+          Expanded(
+            child: ListenableBuilder(
+              listenable: appState,
+              builder: (context, _) {
+                final saved = appState.favoriteProperties;
+                if (saved.isEmpty) return const _EmptyState();
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: saved.length,
+                  itemBuilder: (context, i) {
+                    final property = saved[i];
+                    return PropertyCard(
+                      property: property,
+                      isFavorited: true,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => PropertyDetailsScreen(property: property)),
+                      ),
+                      onFavoriteToggle: () => appState.toggleFavorite(property.id),
+                    );
+                  },
+                );
+              },
             ),
+          ),
         ],
       ),
     );
@@ -52,6 +55,8 @@ class FavoritesScreen extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
   @override
   Widget build(BuildContext context) {
     return Center(

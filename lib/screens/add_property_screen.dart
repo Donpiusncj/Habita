@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/property.dart';
+import '../state/app_state.dart';
 import '../theme/habita_theme.dart';
 import '../utils/validators.dart';
 
@@ -66,9 +67,48 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
 
   void _submit() {
     setState(() => _submitted = true);
-    if (_formKey.currentState!.validate()) {
-      showComingSoon(context, widget.isEditing ? 'Saving changes' : 'Submitting listing for review');
+    if (!_formKey.currentState!.validate()) return;
+
+    final transactionType = switch (_transactionType) {
+      'For Rent' => TransactionType.forRent,
+      'For Lease' => TransactionType.forLease,
+      _ => TransactionType.forSale,
+    };
+
+    final rawPrice = _priceController.text.replaceAll(RegExp(r'[,\s]'), '');
+    final price = int.tryParse(rawPrice) ?? 0;
+
+    final locationParts = _locationController.text.split(',');
+    final town = locationParts.isNotEmpty ? locationParts[0].trim() : _locationController.text.trim();
+    final district = locationParts.length > 1 ? locationParts.sublist(1).join(',').trim() : town;
+
+    final existing = widget.existingProperty;
+    final property = Property(
+      id: existing?.id ?? 'p${DateTime.now().millisecondsSinceEpoch}',
+      title: _titleController.text.trim(),
+      propertyType: _propertyType,
+      transactionType: transactionType,
+      price: price,
+      town: town,
+      district: district,
+      bedrooms: existing?.bedrooms,
+      bathrooms: existing?.bathrooms,
+      landSizeAcres: _needsLandSize ? double.tryParse(_landSizeController.text.trim()) : null,
+      // Any new or edited listing goes back to Under Review — Habita never
+      // marks something "Verified" on its own, per the disclaimer below.
+      verification: VerificationStatus.underReview,
+      imageAsset: existing?.imageAsset ?? 'house_1',
+      description: _descriptionController.text.trim(),
+    );
+
+    if (widget.isEditing) {
+      appState.updateProperty(property);
+    } else {
+      appState.addProperty(property);
     }
+
+    Navigator.pop(context);
+    showConfirmation(widget.isEditing ? 'Changes saved' : 'Listing submitted for review');
   }
 
   @override

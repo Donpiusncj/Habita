@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
-import '../data/mock_properties.dart';
 import '../models/property.dart';
+import '../state/app_state.dart';
 import '../theme/habita_theme.dart';
 import 'add_property_screen.dart';
 import 'property_details_screen.dart';
 
 /// Owner/agent's own listings. Reached from Profile → My Properties.
-/// Tapping a listing opens it pre-filled in AddPropertyScreen's edit mode —
-/// the Week 4 "Profile → My Properties → Edit Property" flow, with the
-/// selected Property passed along as real data, not just a placeholder.
+/// Now reads live from [appState.myProperties], so a newly submitted
+/// listing (from Add Property) or an edited one shows up here immediately
+/// — no app restart needed. Tapping the pencil icon opens it pre-filled in
+/// AddPropertyScreen's edit mode, passing the real Property along.
 class MyPropertiesScreen extends StatelessWidget {
   const MyPropertiesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Stand-in: pretend the first three mock properties belong to this user.
-    final myProperties = mockProperties.take(3).toList();
-
     return Scaffold(
       appBar: AppBar(title: const Text('My Properties')),
       floatingActionButton: FloatingActionButton.extended(
@@ -29,13 +27,19 @@ class MyPropertiesScreen extends StatelessWidget {
         label: const Text('Add Property'),
       ),
       body: SafeArea(
-        child: myProperties.isEmpty
-            ? const _EmptyState()
-            : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 90),
-                itemCount: myProperties.length,
-                itemBuilder: (context, i) => _MyPropertyTile(property: myProperties[i]),
-              ),
+        child: ListenableBuilder(
+          listenable: appState,
+          builder: (context, _) {
+            final myProperties = appState.myProperties;
+            return myProperties.isEmpty
+                ? const _EmptyState()
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 90),
+                    itemCount: myProperties.length,
+                    itemBuilder: (context, i) => _MyPropertyTile(property: myProperties[i]),
+                  );
+          },
+        ),
       ),
     );
   }

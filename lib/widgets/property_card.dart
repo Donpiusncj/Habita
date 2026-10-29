@@ -20,20 +20,21 @@ class PropertyCard extends StatelessWidget {
     this.isFavorited = false,
   });
 
-  IconData get _typeIcon {
+   // Helper to get the correct image path based on property type
+  String get _propertyImagePath {
     switch (property.propertyType) {
       case 'House':
-        return Icons.home_outlined;
+        return 'assets/images/House_1.jpg';
       case 'Apartment':
-        return Icons.apartment_outlined;
+        return 'assets/images/Apartment_1.jpg';
       case 'Land':
-        return Icons.terrain_outlined;
+        return 'assets/images/Land_1.jpg';
       case 'Farm':
-        return Icons.grass_outlined;
+        return 'assets/images/Farm_1.jpg';
       case 'Shop':
-        return Icons.storefront_outlined;
+        return 'assets/images/Shop_1.jpg';
       default:
-        return Icons.location_city_outlined;
+        return 'assets/images/House_1.jpg'; // Fallback
     }
   }
 
@@ -59,12 +60,20 @@ class PropertyCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: Container(
+                                    child: Image.asset(
+                    _propertyImagePath,
                     height: 150,
                     width: double.infinity,
-                    color: HabitaColors.surface,
-                    alignment: Alignment.center,
-                    child: Icon(_typeIcon, size: 44, color: HabitaColors.textSecondary),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 150,
+                        width: double.infinity,
+                        color: HabitaColors.surface,
+                        alignment: Alignment.center,
+                       
+                      );
+                    },
                   ),
                 ),
                 Positioned(

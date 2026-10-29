@@ -1,14 +1,32 @@
 import 'package:flutter/material.dart';
 import '../models/property.dart';
+import '../state/app_state.dart';
 import '../theme/habita_theme.dart';
 import 'contact_screen.dart';
 
 /// Full property detail view. Accepts a Property directly for Week 3's
 /// standalone preview; Week 4 will wire this up so tapping a PropertyCard
 /// navigates here with the real selected property passed as route data.
-class PropertyDetailsScreen extends StatelessWidget {
+class PropertyDetailsScreen extends StatefulWidget {
   final Property property;
   const PropertyDetailsScreen({super.key, required this.property});
+
+  @override
+  State<PropertyDetailsScreen> createState() => _PropertyDetailsScreenState();
+}
+
+class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
+  Property get property => widget.property;
+
+  @override
+  void initState() {
+    super.initState();
+    // Record the view after the first frame, not during it: recording
+    // updates app state, and other screens must not rebuild mid-build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      appState.recordView(property.id);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,9 +39,20 @@ class PropertyDetailsScreen extends StatelessWidget {
             foregroundColor: HabitaColors.textPrimary,
             pinned: true,
             actions: [
-              IconButton(
-                onPressed: () => showComingSoon(context, 'Saving this property'),
-                icon: const Icon(Icons.favorite_border),
+              // Same shared favorites as Home/Search/Saved: tapping here
+              // saves to the device too, and the heart fills in live.
+              ListenableBuilder(
+                listenable: appState,
+                builder: (context, _) {
+                  final isFav = appState.isFavorite(property.id);
+                  return IconButton(
+                    onPressed: () => appState.toggleFavorite(property.id),
+                    icon: Icon(
+                      isFav ? Icons.favorite : Icons.favorite_border,
+                      color: isFav ? HabitaColors.error : null,
+                    ),
+                  );
+                },
               ),
               IconButton(
                 onPressed: () => showComingSoon(context, 'Sharing this property'),

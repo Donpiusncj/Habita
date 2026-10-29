@@ -3,6 +3,7 @@ import '../theme/habita_theme.dart';
 import 'login_screen.dart';
 import 'add_property_screen.dart';
 import 'my_properties_screen.dart';
+import 'recently_viewed_screen.dart';
 
 /// Profile tab. Shown in its logged-out state — Week 10 (Authentication &
 /// Cloud Data) is where real session state decides which version to show.
@@ -76,7 +77,10 @@ class ProfileScreen extends StatelessWidget {
           _MenuTile(
             icon: Icons.history,
             title: 'Recently Viewed',
-            onTap: () => showComingSoon(context, 'Recently Viewed'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const RecentlyViewedScreen()),
+            ),
           ),
           _MenuTile(
             icon: Icons.settings_outlined,
